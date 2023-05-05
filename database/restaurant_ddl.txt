@@ -1,0 +1,226 @@
+drop database if exists restaurantDB;
+create database restaurantDB;
+
+
+# strong entities (Restaurant, Employee, Customer, Company, Food)
+CREATE TABLE Restaurants (
+    restaurant_name VARCHAR(50) PRIMARY KEY,
+    url VARCHAR(100) NOT NULL,
+    address VARCHAR(100) NOT NULL
+);
+insert into Restaurants(restaurant_name, url, address)
+VALUES  ('Restaurant1','https://restaurant1.com','1 restaurant rd'),
+		('Restaurant2','https://restaurant2.com','2 restaurant rd'),
+        ('Restaurant3','https://restaurant3.com','3 restaurant rd'),
+        ('Restaurant4','https://restaurant4.com','4 restaurant rd'),
+        ('Restaurant5','https://restaurant5.com','5 restaurant rd'),
+        ('Restaurant6','https://restaurant6.com','6 restaurant rd');
+
+CREATE TABLE Employees (
+    employee_id INT PRIMARY KEY,
+    employee_name VARCHAR(50) NOT NULL,
+    employee_email VARCHAR(50) NOT NULL,
+    employee_type ENUM('management', 'delivery', 'chef', 'server') NOT NULL,
+    restaurant_name VARCHAR(50) NOT NULL,
+    # if restaurant is deleted, employee can't work there
+    FOREIGN KEY (restaurant_name) REFERENCES Restaurants (restaurant_name) ON DELETE CASCADE
+);
+insert into Employees(employee_id, employee_name, employee_email, employee_type, restaurant_name)
+VALUES  (001, 'Employee1', 'employee1@restaurant1.com', 'chef', 'Restaurant1'),
+        (002, 'Employee2', 'employee2@restaurant1.com', 'chef', 'Restaurant1'),
+        (003, 'Employee3', 'employee3@restaurant1.com', 'server', 'Restaurant1'),
+        (004, 'Employee4', 'employee4@restaurant1.com', 'server', 'Restaurant1'),
+        (005, 'Employee5', 'employee5@restaurant1.com', 'management', 'Restaurant1'),
+        (006, 'Employee6', 'employee6@restaurant1.com', 'delivery', 'Restaurant1');
+
+
+CREATE TABLE Customers (
+    customer_email VARCHAR(50) PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    phone_number VARCHAR(20) NOT NULL,
+    delivery_address VARCHAR(100) NOT NULL,
+    credit decimal(6,2)
+);
+insert into Customers(customer_email, first_name, last_name, phone_number, delivery_address)
+VALUES  ('customer1@email.com', 'first1', 'last1', '(000) 000-0001', '1 customer ln'),
+        ('customer2@email.com', 'first2', 'last2', '(000) 000-0002', '2 customer ln'),
+        ('customer3@email.com', 'first3', 'last3', '(000) 000-0003', '3 customer ln'),
+        ('customer4@email.com', 'first4', 'last4', '(000) 000-0004', '4 customer ln'),
+        ('customer5@email.com', 'first5', 'last5', '(000) 000-0005', '5 customer ln'),
+        ('customer6@email.com', 'first6', 'last6', '(000) 000-0006', '6 customer ln');
+
+CREATE TABLE Companies (
+    company_name VARCHAR(50) NOT NULL,
+    restaurant_name VARCHAR(50) NOT NULL,
+    PRIMARY KEY(company_name, restaurant_name),
+    # if restaurant is deleted, employee can't work there
+    FOREIGN KEY (restaurant_name) REFERENCES Restaurants (restaurant_name) ON DELETE CASCADE
+);
+insert into Companies(company_name, restaurant_name)
+VALUES  ('company1', 'restaurant1'),
+		('company1', 'restaurant2'),
+        ('company1', 'restaurant3'),
+        ('company2', 'restaurant4'),
+        ('company3', 'restaurant5'),
+        ('company3', 'restaurant6');
+
+CREATE TABLE food (
+    restaurant_name VARCHAR(50) NOT NULL,
+    food_name VARCHAR(50) NOT NULL,
+    price DECIMAL(6,2) NOT NULL,
+    PRIMARY KEY(restaurant_name, food_name, price),
+    FOREIGN KEY (restaurant_name) REFERENCES Restaurants (restaurant_name) ON DELETE CASCADE
+);
+insert into food(restaurant_name, food_name, price)
+VALUES  ('Restaurant1', ' 30cm Pizza (1 Topping)', 22.99),
+		('Restaurant1', ' 40cm Pizza (1 Topping)', 26.99),
+        ('Restaurant2', ' 30cm Pizza (1 Topping)', 20.99),
+        ('Restaurant2', ' 40cm Pizza (1 Topping)', 23.99),
+        ('Restaurant3', ' 30cm Pizza (1 Topping)', 49.99),
+        ('Restaurant3', ' 40cm Pizza (1 Topping)', 60.99);
+
+# process weak entities (orders, account, schedule, menu)
+CREATE TABLE Schedules (
+    employee_id INT,
+    day_of_week ENUM('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday') NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    PRIMARY KEY (employee_id, day_of_week),
+    #if employee gets deleted, so does their schedule
+    FOREIGN KEY (employee_id) REFERENCES Employees (employee_id) ON DELETE CASCADE
+);
+insert into Schedules(employee_id, day_of_week, start_time, end_time)
+VALUES  (001, 'Monday', '09:00:00', '17:00:00'),
+		(002, 'Monday', '09:00:00', '17:00:00'),
+        (003, 'Monday', '14:00:00', '22:00:00'),
+        (004, 'Monday', '17:00:00', '22:00:00'),
+        (005, 'Monday', '17:00:00', '17:00:00'),
+        (006, 'Monday', '16:00:00', '20:00:00');
+
+
+CREATE TABLE Accounts (
+    customer_email VARCHAR(50) NOT NULL,
+    payment_date DATE NOT NULL,
+    amount DECIMAL(6,2) NOT NULL,
+    PRIMARY KEY (payment_date, amount),
+    FOREIGN KEY (customer_email) REFERENCES Customers (customer_email) ON DELETE CASCADE
+);
+insert into Accounts(customer_email, payment_date, amount)
+VALUES  ('customer1@email.com', '2023-01-01', 22.99),
+		('customer2@email.com', '2023-01-02', 26.99),
+        ('customer3@email.com', '2023-01-03', 20.99),
+        ('customer4@email.com', '2023-01-01', 23.99),
+        ('customer5@email.com', '2023-01-02', 49.99),
+        ('customer6@email.com', '2023-01-03', 60.99);
+
+CREATE TABLE Orders (
+    order_id INT PRIMARY KEY,
+    tip DECIMAL(6,2) NOT NULL,
+    order_placement_date DATE NOT NULL,
+    order_placement_time TIME NOT NULL,
+    order_delivery_time DATETIME,
+    order_price DECIMAL(6,2) NOT NULL,
+    #foreign keys
+    customer_email VARCHAR(50) NOT NULL,
+    restaurant_name VARCHAR(50) NOT NULL,
+    delivery_employee_id INT,
+    FOREIGN KEY (customer_email) REFERENCES Customers (customer_email) ON DELETE CASCADE,
+    FOREIGN KEY (restaurant_name) REFERENCES Restaurants (restaurant_name) ON DELETE CASCADE,
+    FOREIGN KEY (delivery_employee_id) REFERENCES Employees (employee_id) ON DELETE CASCADE
+);
+insert into Orders(order_id, tip, order_placement_date, order_placement_time, order_delivery_time, order_price, customer_email, restaurant_name, delivery_employee_id)
+VALUES  (001, 0.99, '2023-01-02', '10:00:00', '2023-01-02 10:20:00', 22.99, 'customer1@email.com', 'Restaurant1', 001),
+	(002, 1.99, '2023-01-01', '11:00:00', '2023-01-01 11:20:00', 20.99, 'customer2@email.com', 'Restaurant1', 001),
+        (003, 2.99, '2023-01-01', '12:00:00', '2023-01-01 12:20:00', 26.99, 'customer3@email.com', 'Restaurant2', 001),
+        (004, 3.99, '2023-01-01', '13:00:00', '2023-01-01 13:20:00', 23.99, 'customer4@email.com', 'Restaurant2', 001),
+        (005, 4.99, '2023-01-01', '14:00:00', '2023-01-01 14:20:00', 49.99, 'customer5@email.com', 'Restaurant3', 001),
+        (006, 5.99, '2023-01-01', '15:00:00', '2023-01-01 15:20:00', 60.99, 'customer6@email.com', 'Restaurant3', 001);
+             
+#specialization hierarchy (only include chef and driver)               
+CREATE TABLE Chefs (
+    chef_id INT NOT NULL,
+    credential_name VARCHAR(50) NOT NULL,
+    PRIMARY KEY(chef_id, credential_name),
+    FOREIGN KEY (chef_id) REFERENCES Employees (employee_id) ON DELETE CASCADE
+);
+insert into Chefs (chef_id, credential_name)
+VALUES  (003, 'chef school'),
+        (003, 'bartending 101'),
+     	(004, 'chef school'),
+    	(004, 'workplace safety'),
+        (005, 'chef school'),
+        (005, 'bartending 101');
+
+CREATE TABLE Drivers (
+    delivery_id INT PRIMARY KEY,
+    driver_id INT NOT NULL,
+    FOREIGN KEY (driver_id) REFERENCES Employees (employee_id) ON DELETE CASCADE
+);
+insert into Drivers (driver_id, delivery_id)
+VALUES  (001, 001),
+		(002, 002);
+      
+CREATE TABLE Managers (
+    manager_id INT PRIMARY KEY,
+    FOREIGN KEY (manager_id) REFERENCES Employees (employee_id) ON DELETE CASCADE
+);
+insert into Managers (manager_id)
+VALUES  (003),
+		(004);
+
+CREATE TABLE Servers (
+    server_id INT PRIMARY KEY,
+    FOREIGN KEY (server_id) REFERENCES Employees (employee_id) ON DELETE CASCADE
+);
+insert into Servers (server_id)
+VALUES  (005),
+		(006);
+    
+# N-M Relations
+CREATE TABLE Customer_Employee (
+    customer_email VARCHAR(50) NOT NULL,
+    employee_id INT NOT NULL,
+    relation_type VARCHAR(50) NOT NULL,
+    PRIMARY KEY(customer_email, employee_id),
+    FOREIGN KEY (customer_email) REFERENCES Customers (customer_email) ON DELETE CASCADE,
+    FOREIGN KEY (employee_id) REFERENCES Employees (employee_id) ON DELETE CASCADE
+);
+insert into Customer_Employee(customer_email, employee_id, relation_type)
+VALUES  ('customer1@email.com', 001, 'Friend'),
+		('customer2@email.com', 001, 'Family'),
+        ('customer3@email.com', 001, 'Wife'),
+        ('customer4@email.com', 002, 'Friend'),
+        ('customer5@email.com', 003, 'Rival'),
+        ('customer6@email.com', 004, 'Family');
+        
+CREATE TABLE Order_items (
+    order_id INT NOT NULL,
+    food_name VARCHAR(50) NOT NULL,
+    price decimal(6,2) NOT NULL,
+    PRIMARY KEY(order_id, food_name, price),
+	FOREIGN KEY (order_id) REFERENCES Orders (order_id) ON DELETE CASCADE
+);             
+insert into Order_items (order_id, food_name, price)
+VALUES  (001, ' 30cm Pizza (2 Topping)', 22.99),
+        (002, ' 30cm Pizza (1 Topping)', 20.99),
+	(003, ' 40cm Pizza (2 Topping)', 26.99),
+        (004, ' 40cm Pizza (1 Topping)', 23.99),
+        (005, ' 50cm Pizza (1 Topping)', 49.99),
+        (006, ' 50cm Pizza (2 Topping)', 60.99);
+
+CREATE TABLE Restaurant_Orders (
+    restaurant_name VARCHAR(50),
+    order_id INT NOT NULL,
+    PRIMARY KEY(restaurant_name, order_id),
+    FOREIGN KEY (restaurant_name) REFERENCES Restaurants (restaurant_name) ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES Orders (order_id) ON DELETE CASCADE
+);
+
+insert into Restaurant_Orders(restaurant_name, order_id)
+VALUES  ('Restaurant1', 001),
+		('Restaurant1', 002),
+        ('Restaurant2', 003),
+        ('Restaurant2', 004),
+        ('Restaurant3', 005),
+        ('Restaurant3', 006);
