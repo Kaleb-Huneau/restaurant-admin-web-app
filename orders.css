@@ -1,0 +1,47 @@
+/* Set Background Colour */
+body {
+    background-color: black;
+    color: antiquewhite;
+}
+
+/* Nav Bar */
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+}
+
+li {
+    float: left;
+}
+
+li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+/* Change the link color to #111 (black) on hover */
+li a:hover {
+    background-color: #111;
+}
+
+li h1 {
+    color: antiquewhite;
+    width: max-content;
+    margin-top: 5px;
+    margin-bottom: 0px;
+    margin-left: 240px;
+}
+
+form {
+    color: antiquewhite;
+}
+
+h1 {
+    color: antiquewhite;
+}
