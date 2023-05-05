@@ -7,12 +7,12 @@ There are four pages to the application:
 Page 1:
 <img src="website/media/home.jpg">
 
-
 Page 2:
 <img src="website/media/orders.jpg">
 
 Page 3:
-<img src="website/media/employees.jpg">
+<img src="website/media/customers.jpg">
+
 
 Page 4:
-<img src="website/media/customers.jpg">
+<img src="website/media/employees.jpg">
